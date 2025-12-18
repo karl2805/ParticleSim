@@ -19,8 +19,10 @@ namespace GLCore::Utils {
 
 		void LoadFromGLSLTextFiles(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 		GLuint CompileShader(GLenum type, const std::string& source);
+		void CreateComputeShader(const std::string& filepath);
 	private:
 		GLuint m_RendererID;
+		GLuint m_ComputeID;
 	};
 
 }

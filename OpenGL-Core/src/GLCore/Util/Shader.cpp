@@ -107,4 +107,58 @@ namespace GLCore::Utils {
 		m_RendererID = program;
 	}
 
+	void Shader::CreateComputeShader(const std::string& filepath)
+	{
+		std::string shaderSource = ReadFileAsString(filepath);
+
+		GLuint shaderHandle = glCreateShader(GL_COMPUTE_SHADER);
+
+		const GLchar* source = (const GLchar*)shaderSource.c_str();
+		glShaderSource(shaderHandle, 1, &source, 0);
+
+		glCompileShader(shaderHandle);
+
+		GLint isCompiled = 0;
+		glGetShaderiv(shaderHandle, GL_COMPILE_STATUS, &isCompiled);
+		if (isCompiled == GL_FALSE)
+		{
+			GLint maxLength = 0;
+			glGetShaderiv(shaderHandle, GL_INFO_LOG_LENGTH, &maxLength);
+
+			std::vector<GLchar> infoLog(maxLength);
+			glGetShaderInfoLog(shaderHandle, maxLength, &maxLength, &infoLog[0]);
+
+			std::cerr << infoLog.data() << std::endl;
+
+			glDeleteShader(shaderHandle);
+			return;
+		}
+
+		GLuint program = glCreateProgram();
+		glAttachShader(program, shaderHandle);
+		glLinkProgram(program);
+
+		GLint isLinked = 0;
+		glGetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
+		if (isLinked == GL_FALSE)
+		{
+			GLint maxLength = 0;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+
+			std::vector<GLchar> infoLog(maxLength);
+			glGetProgramInfoLog(program, maxLength, &maxLength, &infoLog[0]);
+
+			std::cerr << infoLog.data() << std::endl;
+
+			glDeleteProgram(program);
+			glDeleteShader(shaderHandle);
+
+			return;
+		}
+
+		glDetachShader(program, shaderHandle);
+		m_ComputeID = program;
+	}
+
+	
 }
