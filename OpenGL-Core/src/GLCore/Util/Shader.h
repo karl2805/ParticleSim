@@ -8,21 +8,30 @@ namespace GLCore::Utils {
 
 	class Shader
 	{
+	
 	public:
+		
 		~Shader();
 
 		GLuint GetRendererID() { return m_RendererID; }
 
 		static Shader* FromGLSLTextFiles(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
+		
 	private:
 		Shader() = default;
 
 		void LoadFromGLSLTextFiles(const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
 		GLuint CompileShader(GLenum type, const std::string& source);
-		void CreateComputeShader(const std::string& filepath);
+		
 	private:
 		GLuint m_RendererID;
-		GLuint m_ComputeID;
+		
 	};
+
+
+	GLint CreateComputeShader(const std::string& filepath);
+	GLint ReloadComputeShader(GLint ComputeID, std::string& filepath);
+	Shader* ReloadGraphicsShader(Shader* shader, const std::string& vertexShaderPath, const std::string& fragmentShaderPath);
+	
 
 }

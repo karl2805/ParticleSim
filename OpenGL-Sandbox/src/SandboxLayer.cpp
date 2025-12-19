@@ -1,5 +1,6 @@
 #include "SandboxLayer.h"
 #include "GLCore/Util/Shader.h"
+#include <print>
 
 
 using namespace GLCore;
@@ -18,6 +19,9 @@ void SandboxLayer::OnAttach()
 	EnableGLDebugging();
 
     m_shader = Shader::FromGLSLTextFiles("Shaders/vertex.vert.glsl", "Shaders/fragment.frag.glsl");
+
+    m_comp_shader = CreateComputeShader("Shaders/compute.comp.glsl");
+
     
 
 	float vertices[] = {
@@ -57,7 +61,51 @@ void SandboxLayer::OnAttach()
 
     m_texture = LoadTexture("assets/container.jpg");
 
+    // dimensions of the image
+    
+   
+    glGenTextures(1, &tex_output);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_output);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
+    int work_grp_cnt[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+
+    printf("max global (total) work group counts x:%i y:%i z:%i\n", work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
+
+    int work_grp_size[3];
+
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+
+    printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
+        work_grp_size[0], work_grp_size[1], work_grp_size[2]);
+
+    int work_grp_inv;
+
+    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+    printf("max local work group invocations %i\n", work_grp_inv);
+
+    glm::mat4 transform = glm::mat4(0.0f);
+
+    glm::vec3 pos = glm::vec3(1280.0f/2, 720.0f/2, 0.0f);
+
+    transform = glm::translate(transform, pos);
+
+    int vertexColorLocation = glGetUniformLocation(m_shader->GetRendererID(), "translate");
+    glUseProgram(m_shader->GetRendererID());
+    glUniformMatrix4fv(vertexColorLocation, 1, GL_FALSE, &transform[0][0]);
+    
     
 }
 
@@ -68,22 +116,38 @@ void SandboxLayer::OnDetach()
 
 void SandboxLayer::OnEvent(Event& event)
 {
-	// Events here
+    EventDispatcher dispatcher(event);
+    dispatcher.Dispatch<WindowResizeEvent>([&]{
+        
+
+        });
+
+
+
+
 }
 
 void SandboxLayer::OnUpdate(Timestep ts)
 {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+    glUseProgram(m_comp_shader);
+    glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
+
+    // make sure writing to image has finished before read
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindTexture(GL_TEXTURE_2D, m_texture.TextureID);
 
     glUseProgram(m_shader->GetRendererID());
 
-    glBindVertexArray(VAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex_output);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-    
 
     
 

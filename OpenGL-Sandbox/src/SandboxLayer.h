@@ -18,6 +18,22 @@ public:
 	virtual void OnImGuiRender() override;
 private:
 	Texture m_texture;
-	GLCore::Utils::Shader* m_shader;
 	unsigned int VBO, VAO, EBO;
+	GLCore::Utils::Shader* m_shader;
+
+
+	GLint m_comp_shader;
+
+	int m_WindowWidth, m_WindowHeight;
+
+	GLuint tex_output;
+
+
+	glm::vec2 mouse_pos;
+
+
+
+
+
+	
 };

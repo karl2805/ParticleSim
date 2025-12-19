@@ -107,7 +107,7 @@ namespace GLCore::Utils {
 		m_RendererID = program;
 	}
 
-	void Shader::CreateComputeShader(const std::string& filepath)
+	GLint CreateComputeShader(const std::string& filepath)
 	{
 		std::string shaderSource = ReadFileAsString(filepath);
 
@@ -131,7 +131,7 @@ namespace GLCore::Utils {
 			std::cerr << infoLog.data() << std::endl;
 
 			glDeleteShader(shaderHandle);
-			return;
+			return 0;
 		}
 
 		GLuint program = glCreateProgram();
@@ -153,12 +153,29 @@ namespace GLCore::Utils {
 			glDeleteProgram(program);
 			glDeleteShader(shaderHandle);
 
-			return;
+			return 0;
 		}
 
 		glDetachShader(program, shaderHandle);
-		m_ComputeID = program;
+		return program;
 	}
+
+	GLint ReloadComputeShader(GLint ComputeID, const std::string& filepath)
+	{
+		glDeleteProgram(ComputeID);
+
+		return CreateComputeShader(filepath);
+	}
+
+	Shader* ReloadGraphicsShader(Shader* shader, const std::string& vertexShaderPath, const std::string& fragmentShaderPath)
+	{
+		delete shader;
+		Shader* newShader = Shader::FromGLSLTextFiles(vertexShaderPath, fragmentShaderPath);
+
+		return newShader;
+	}
+
+	
 
 	
 }
