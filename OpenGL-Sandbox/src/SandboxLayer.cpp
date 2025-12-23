@@ -18,9 +18,6 @@ SandboxLayer::SandboxLayer()
         }
     }
 
-    
-
-
 }
 
 SandboxLayer::~SandboxLayer()
@@ -130,8 +127,6 @@ void SandboxLayer::OnEvent(Event& event)
             return false;
         });
 
-    
-    
 }
 
 void SandboxLayer::OnUpdate(Timestep ts)
@@ -172,5 +167,8 @@ void SandboxLayer::OnRender()
 
 void SandboxLayer::OnImGuiRender()
 {
-	// ImGui here
+    ImGui::Begin("Viewport");
+
+    ImGui::End();
+
 }

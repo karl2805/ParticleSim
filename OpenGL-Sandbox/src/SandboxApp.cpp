@@ -7,7 +7,7 @@ class Sandbox : public Application
 {
 public:
 	Sandbox()
-		:Application("Phase Change Simulation", 1000, 1000)
+		:Application("Phase Change Simulation", 1920, 1080)
 	{
 		PushLayer(new SandboxLayer());
 	}
