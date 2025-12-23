@@ -8,15 +8,9 @@ using namespace GLCore;
 using namespace GLCore::Utils;
 
 SandboxLayer::SandboxLayer()
+    : m_CameraController(1.0f / 1.0f)
 {
-    for (int i = 0; i < GRID_SIZE * GRID_SIZE; i++)
-    {
-        int choices = 5;
-        int picked_choice = (int)(rand() % choices);
-        if (picked_choice == 1) {
-            m_ParticleStates_in[i] = 1;
-        }
-    }
+   
 
 }
 
@@ -32,19 +26,14 @@ void SandboxLayer::OnAttach()
 
     m_comp_shader = CreateComputeShader("Shaders/GameOfLife.comp.glsl");
 
-    
-	float vertices[] = {
-		// positions       
-		 1.0f,  1.0f, 0.0f,
-		 1.0f, -1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		-1.0f,  1.0f, 0.0f
-	};
-
-    unsigned int indices[] = {
-       0, 1, 3, // first triangle
-       1, 2, 3  // second triangle
-    };
+    for (int i = 0; i < m_GridSize * m_GridSize; i++)
+    {
+        int choices = 5;
+        int picked_choice = (int)(rand() % choices);
+        if (picked_choice == 1) {
+            m_ParticleStates_in[i] = 1;
+        }
+    }
     
     glGenVertexArrays(1, &m_VAO);
     glGenBuffers(1, &m_VBO);
@@ -80,16 +69,23 @@ void SandboxLayer::OnAttach()
 
 void SandboxLayer::OnDetach()
 {
-	// Shutdown here
+    glDeleteBuffers(sizeof(vertices), &m_VBO);
+    glDeleteBuffers(sizeof(indices), &m_EBO);
+
+  
+
+    //set the ping pong arrays to zero
+    memset(m_ParticleStates_in, 0, sizeof(m_ParticleStates_in));
+    memset(m_ParticleStates_out, 0, sizeof(m_ParticleStates_out));
 }
 
-int CellIndex(glm::vec2 CellCoord)
-{
-    return int(CellCoord.y) * GRID_SIZE + int(CellCoord.x) * 0.001;
-}
+
 
 void SandboxLayer::OnEvent(Event& event)
 {
+
+    m_CameraController.OnEvent(event);
+
     EventDispatcher dispatcher(event);
 
     dispatcher.Dispatch<MouseMovedEvent>(
@@ -113,24 +109,22 @@ void SandboxLayer::OnEvent(Event& event)
             std::cout << "preessed";
 
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_SSBO_in);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_ParticleStates_in), m_ParticleStates_in, GL_DYNAMIC_STORAGE_BIT);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_ParticleStates_in), m_ParticleStates_in, GL_STATIC_DRAW);
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
 
             return false;
         });
 
-    dispatcher.Dispatch<KeyPressedEvent>(
-        [&](KeyPressedEvent&e)
-        {
-            m_Compute = m_Compute ? false : true;
+    
+    
 
-            return false;
-        });
+  
 
 }
 
 void SandboxLayer::OnUpdate(Timestep ts)
 {
+    m_CameraController.OnUpdate(ts);
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -139,25 +133,32 @@ void SandboxLayer::OnUpdate(Timestep ts)
     int location = glGetUniformLocation(m_shader->GetRendererID(), "u_GridSize");
     glUniform1i(location, m_GridSize);
 
+    location = glGetUniformLocation(m_shader->GetRendererID(), "u_ViewProjection");
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(m_CameraController.GetCamera().GetViewProjectionMatrix()));
+
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, m_GridSize * m_GridSize);
     
+    m_TimestepLogger += ts;
 
-    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, GRID_SIZE * GRID_SIZE);
-    
-    Sleep(109);
-    
-    glUseProgram(m_comp_shader);
+    if (m_TimestepLogger >= m_UpdateFrequency && m_Compute)
+    {
 
-    location = glGetUniformLocation(m_comp_shader, "u_GridSize");
-    glUniform1i(location, m_GridSize);
+        glUseProgram(m_comp_shader);
 
-    glDispatchCompute(GRID_SIZE*GRID_SIZE,1, 1);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        location = glGetUniformLocation(m_comp_shader, "u_GridSize");
+        glUniform1i(location, m_GridSize);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
+        glDispatchCompute(m_GridSize * m_GridSize, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
 
-    std::swap(m_SSBO_in, m_SSBO_out);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
+
+        std::swap(m_SSBO_in, m_SSBO_out);
+
+        m_TimestepLogger = 0;
+    }
 }
 
 void SandboxLayer::OnRender()
@@ -168,6 +169,24 @@ void SandboxLayer::OnRender()
 void SandboxLayer::OnImGuiRender()
 {
     ImGui::Begin("Viewport");
+
+    
+
+    if (ImGui::Button(m_State.c_str()))
+    {
+        m_Compute = m_Compute ? false : true;
+        m_State = m_Compute ? "Pause Simulation" : "Run Simulation";
+    }
+
+    if (ImGui::Button("Reset"))
+    {
+        OnDetach();
+        OnAttach();
+    }
+
+
+    ImGui::SliderFloat("Speed", &m_UpdateFrequency, 0.2f, 0.0f);
+    ImGui::SliderInt("GridSize", &m_GridSize, 4, 1000);
 
     ImGui::End();
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#define GRID_SIZE 600
+#define GRID_SIZE 100
 
 
 
@@ -28,6 +28,22 @@ private:
 	GLCore::Utils::Shader* m_shader;
 
 
+	float vertices[3 * 4] = {
+		// positions       
+		 1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f
+	};
+
+	unsigned int indices[3 * 3] = {
+	   0, 1, 3, // first triangle
+	   1, 2, 3  // second triangle
+	};
+
+	GLCore::Utils::OrthographicCameraController m_CameraController;
+
+
 	GLint m_comp_shader;
 
 	int m_WindowHeight = 720;
@@ -36,6 +52,11 @@ private:
 	GLuint tex_output;
 
 	glm::vec2 m_MousePos;
+
+	float m_TimestepLogger = 0;
+	float m_UpdateFrequency = 0.01;
+
+	std::string m_State = "Run Simulation";
 
 
 	int m_GridSize = GRID_SIZE;

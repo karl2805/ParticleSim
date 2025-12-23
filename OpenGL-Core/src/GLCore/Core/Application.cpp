@@ -8,6 +8,8 @@
 #include <glfw/glfw3.h>
 #include <glad/glad.h>
 
+#include "KeyCodes.h"
+
 namespace GLCore {
 
 #define BIND_EVENT_FN(x) std::bind(&Application::x, this, std::placeholders::_1)
@@ -48,6 +50,14 @@ namespace GLCore {
 	{
 		EventDispatcher dispatcher(e);
 		dispatcher.Dispatch<WindowCloseEvent>(BIND_EVENT_FN(OnWindowClose));
+		dispatcher.Dispatch<KeyPressedEvent>([&](KeyPressedEvent& e) {
+
+			if (e.GetKeyCode() == HZ_KEY_ESCAPE)
+			{
+				m_Running = false;
+				return false;
+			}
+		});
 		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(OnWindowResize));
 
 		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin(); )

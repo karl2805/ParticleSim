@@ -20,6 +20,8 @@ vec2 cell = vec2(i % u_GridSize, floor(i / u_GridSize));
 
 int State = data_SSBO[gl_InstanceID];
 
+uniform mat4 u_ViewProjection;
+
 
 
 
@@ -33,6 +35,6 @@ void main()
 
 	
 
-	gl_Position = vec4(position, 0.0f, 1.0f);
+	gl_Position = u_ViewProjection * vec4(position, 0.0f, 1.0f);
 
 }
