@@ -1,13 +1,30 @@
 #include "SandboxLayer.h"
 #include "GLCore/Util/Shader.h"
 #include <print>
-
+#include <windows.h>
+#include "GLCore/Core/KeyCodes.h"
 
 using namespace GLCore;
 using namespace GLCore::Utils;
 
 SandboxLayer::SandboxLayer()
 {
+    for (int i = 0; i < GRID_SIZE * GRID_SIZE; i++)
+    {
+        int choices = 10;
+        int picked_choice = (int)(rand() % choices);
+        if (picked_choice == 1) {
+            m_ParticleStates_in[i] = 1;
+        }
+    }
+
+   /* m_ParticleStates_in[500] = 1;
+    m_ParticleStates_in[500] = 1;
+    m_ParticleStates_in[500] = 1;
+    m_ParticleStates_in[500] = 1;
+    m_ParticleStates_in[500] = 1;*/
+
+
 }
 
 SandboxLayer::~SandboxLayer()
@@ -23,13 +40,12 @@ void SandboxLayer::OnAttach()
     m_comp_shader = CreateComputeShader("Shaders/compute.comp.glsl");
 
     
-
 	float vertices[] = {
-		// positions          // colors           // texture coords
-		 1.0f,  1.0f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-		 1.0f, -1.0f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-		-1.0f, -1.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-		-1.0f,  1.0f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+		// positions       
+		 1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f
 	};
 
     unsigned int indices[] = {
@@ -37,76 +53,36 @@ void SandboxLayer::OnAttach()
        1, 2, 3  // second triangle
     };
     
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, &m_VAO);
+    glGenBuffers(1, &m_VBO);
+    glGenBuffers(1, &m_EBO);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(m_VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // texture coord attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
-    m_texture = LoadTexture("assets/container.jpg");
-
-    // dimensions of the image
     
-   
-    glGenTextures(1, &tex_output);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_output);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tex_w, tex_h, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindImageTexture(0, tex_output, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    //create SSBO Buffer
+    glGenBuffers(1, &m_SSBO_in);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_SSBO_in);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_ParticleStates_in), m_ParticleStates_in, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    int work_grp_cnt[3];
+    glGenBuffers(1, &m_SSBO_out);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_SSBO_out);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_ParticleStates_out), m_ParticleStates_out, GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-
-    printf("max global (total) work group counts x:%i y:%i z:%i\n", work_grp_cnt[0], work_grp_cnt[1], work_grp_cnt[2]);
-
-    int work_grp_size[3];
-
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-    glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-
-    printf("max local (in one shader) work group sizes x:%i y:%i z:%i\n",
-        work_grp_size[0], work_grp_size[1], work_grp_size[2]);
-
-    int work_grp_inv;
-
-    glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-    printf("max local work group invocations %i\n", work_grp_inv);
-
-    glm::mat4 transform = glm::mat4(0.0f);
-
-    glm::vec3 pos = glm::vec3(1280.0f/2, 720.0f/2, 0.0f);
-
-    transform = glm::translate(transform, pos);
-
-    int vertexColorLocation = glGetUniformLocation(m_shader->GetRendererID(), "translate");
-    glUseProgram(m_shader->GetRendererID());
-    glUniformMatrix4fv(vertexColorLocation, 1, GL_FALSE, &transform[0][0]);
-    
-    
 }
 
 void SandboxLayer::OnDetach()
@@ -114,43 +90,96 @@ void SandboxLayer::OnDetach()
 	// Shutdown here
 }
 
+int CellIndex(glm::vec2 CellCoord)
+{
+    return int(CellCoord.y) * GRID_SIZE + int(CellCoord.x) * 0.001;
+}
+
 void SandboxLayer::OnEvent(Event& event)
 {
     EventDispatcher dispatcher(event);
-    dispatcher.Dispatch<WindowResizeEvent>([&]{
-        
 
+    dispatcher.Dispatch<MouseMovedEvent>(
+        [&](MouseMovedEvent& e)
+        {
+            m_MousePos.x = e.GetX();
+            m_MousePos.y = e.GetY();
+
+            std::cout << m_MousePos.x << "   " << m_MousePos.y << "\n";
+
+            return false;
         });
 
+    dispatcher.Dispatch<MouseButtonPressedEvent>(
+        [&](MouseButtonPressedEvent& e)
+        {
+            
+            m_ParticleStates_in[1000] = 1;
+            m_ParticleStates_out[1000] = 1;
 
+            std::cout << "preessed";
 
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_SSBO_in);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(m_ParticleStates_in), m_ParticleStates_in, GL_DYNAMIC_STORAGE_BIT);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
 
+            return false;
+        });
+
+    dispatcher.Dispatch<KeyPressedEvent>(
+        [&](KeyPressedEvent&e)
+        {
+            m_Compute = m_Compute ? false : true;
+
+            return false;
+        });
+
+    
+    
 }
 
 void SandboxLayer::OnUpdate(Timestep ts)
 {
-
-    glUseProgram(m_comp_shader);
-    glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
-
-    // make sure writing to image has finished before read
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
+   
 
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glBindTexture(GL_TEXTURE_2D, m_texture.TextureID);
-
+   
     glUseProgram(m_shader->GetRendererID());
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_output);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
 
     
 
+    //set uniforms
+
+    int location = glGetUniformLocation(m_shader->GetRendererID(), "u_GridSize");
+    glUniform1i(location, m_GridSize);
+
+    glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, GRID_SIZE * GRID_SIZE);
+
+   
+    
+        
+
+       
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
+
+        
+        Sleep(100);
+    
+
+    
+    glUseProgram(m_comp_shader);
+
+    glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    std::swap(m_SSBO_in, m_SSBO_out);
+}
+
+void SandboxLayer::OnRender()
+{
 
 }
 

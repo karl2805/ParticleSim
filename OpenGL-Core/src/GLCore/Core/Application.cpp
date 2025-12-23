@@ -65,7 +65,10 @@ namespace GLCore {
 			m_LastFrameTime = time;
 
 			for (Layer* layer : m_LayerStack)
+			{
 				layer->OnUpdate(timestep);
+				layer->OnRender();
+			}
 
 			m_ImGuiLayer->Begin();
 			for (Layer* layer : m_LayerStack)
