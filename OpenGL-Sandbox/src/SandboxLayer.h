@@ -1,6 +1,6 @@
 #pragma once
 
-#define GRID_SIZE 64
+#define GRID_SIZE 300
 
 
 

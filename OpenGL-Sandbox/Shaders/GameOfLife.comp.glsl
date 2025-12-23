@@ -38,7 +38,7 @@ void main() {
                         cellActive(int(cell.x-1), int(cell.y+1)) +
                         cellActive(int(cell.x), int(cell.y+1));
 
-int i = CellIndex(cell.xy);
+int i = CellIndex(cell);
 
 switch (activeNeighbors) {
   case 2: { // Active cells with 2 neighbors stay active.

@@ -11,18 +11,14 @@ SandboxLayer::SandboxLayer()
 {
     for (int i = 0; i < GRID_SIZE * GRID_SIZE; i++)
     {
-        int choices = 10;
+        int choices = 5;
         int picked_choice = (int)(rand() % choices);
         if (picked_choice == 1) {
             m_ParticleStates_in[i] = 1;
         }
     }
 
-   /* m_ParticleStates_in[500] = 1;
-    m_ParticleStates_in[500] = 1;
-    m_ParticleStates_in[500] = 1;
-    m_ParticleStates_in[500] = 1;
-    m_ParticleStates_in[500] = 1;*/
+    
 
 
 }
@@ -37,7 +33,7 @@ void SandboxLayer::OnAttach()
 
     m_shader = Shader::FromGLSLTextFiles("Shaders/vertex.vert.glsl", "Shaders/fragment.frag.glsl");
 
-    m_comp_shader = CreateComputeShader("Shaders/compute.comp.glsl");
+    m_comp_shader = CreateComputeShader("Shaders/GameOfLife.comp.glsl");
 
     
 	float vertices[] = {
@@ -140,40 +136,31 @@ void SandboxLayer::OnEvent(Event& event)
 
 void SandboxLayer::OnUpdate(Timestep ts)
 {
-   
-
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-   
     glUseProgram(m_shader->GetRendererID());
-
-    
-
-    //set uniforms
 
     int location = glGetUniformLocation(m_shader->GetRendererID(), "u_GridSize");
     glUniform1i(location, m_GridSize);
 
+    
+
     glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, GRID_SIZE * GRID_SIZE);
-
-   
     
-        
-
-       
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
-
-        
-        Sleep(100);
-    
-
+    Sleep(109);
     
     glUseProgram(m_comp_shader);
 
-    glDispatchCompute(GRID_SIZE / 8, GRID_SIZE / 8, 1);
+    location = glGetUniformLocation(m_comp_shader, "u_GridSize");
+    glUniform1i(location, m_GridSize);
+
+    glDispatchCompute(GRID_SIZE*GRID_SIZE,1, 1);
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_SSBO_in);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_SSBO_out);
 
     std::swap(m_SSBO_in, m_SSBO_out);
 }
