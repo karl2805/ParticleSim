@@ -1,12 +1,6 @@
 #version 440 core
 
-
-
-
 in vec2 v_LocalPosition;
-
-
-
 
 out vec4 FragColor;
 
@@ -14,7 +8,6 @@ float BorderWidth = 0.0f;
 
 void main()
 {
-    
     
      FragColor = vec4(0.08, 0.33, 0.78, 1.0);
 
@@ -25,5 +18,4 @@ void main()
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);
      }
 
-     
 }

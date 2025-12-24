@@ -27,9 +27,9 @@ int cellActive(int x, int y)
 
 void main() {
 
- vec2 cell = gl_GlobalInvocationID.xy;
+vec2 cell = gl_GlobalInvocationID.xy;
 
- int activeNeighbors = cellActive(int(cell.x+1), int(cell.y+1)) +
+int activeNeighbors = cellActive(int(cell.x+1), int(cell.y+1)) +
                         cellActive(int(cell.x+1), int(cell.y)) +
                         cellActive(int(cell.x+1), int(cell.y-1)) +
                         cellActive(int(cell.x), int(cell.y-1)) +
@@ -40,21 +40,25 @@ void main() {
 
 int i = CellIndex(cell);
 
-switch (activeNeighbors) {
-  case 2: { // Active cells with 2 neighbors stay active.
+switch (activeNeighbors) 
+{
+  case 2: 
+  { // Active cells with 2 neighbors stay active.
     State_out[i] = State_in[i];
     break;
   }
-  case 3: { // Cells with 3 neighbors become or stay active.
+  case 3: 
+  { // Cells with 3 neighbors become or stay active.
     State_out[i] = 1;
     break;
   }
-    default: { // Cells with < 2 or > 3 neighbors become inactive.
-    State_out[i] = 0;
-    }
 
-   
+  default: 
+  { // Cells with < 2 or > 3 neighbors become inactive.
+  State_out[i] = 0;
   }
+
+}
 
   
 }

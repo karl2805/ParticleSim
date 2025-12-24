@@ -48,7 +48,7 @@ void SandboxLayer::OnEvent(Event& event)
             m_XMousePos = e.GetX();
             m_YMousePos = e.GetY();
 
-            std::cout << m_XMousePos << "  " << m_YMousePos << "\n";
+            
 
             return false;
         });
@@ -59,10 +59,19 @@ void SandboxLayer::OnEvent(Event& event)
             {
                 m_Game->AddCell(m_XMousePos, m_YMousePos);
 
-                
             }
             return false;
 		});
+
+    dispatcher.Dispatch<MouseButtonPressedEvent>([&](MouseButtonPressedEvent& e)
+        {
+            if (e.GetMouseButton() == LeftClick)
+            {
+                m_Game->RemoveCell(m_XMousePos, m_YMousePos);
+
+            }
+            return false;
+        });
     
 }
 
@@ -98,6 +107,9 @@ void SandboxLayer::OnImGuiRender()
         m_Game = ChangeGridSize(m_Game, m_GridSize);
     }
 
-
+    if (ImGui::Button("Show Grid"))
+    {
+        m_Game->ToggleGrid();
+    }
 
 }
