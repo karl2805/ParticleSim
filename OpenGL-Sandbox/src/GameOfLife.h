@@ -10,33 +10,29 @@
 using namespace GLCore;
 using namespace GLCore::Utils;
 
+
+
 class GameOfLife
 {
+	friend int GetCellIndex(int xcoord, int ycoord, GameOfLife* game);
 public:
 
-	GameOfLife();
+	GameOfLife(int GridSize);
 	~GameOfLife();
 
 	void OnCompute();
 	void OnRender(Timestep ts);
 	void OnEvent(Event& e);
+	void RandomGrid();
+	void AddCell(int xcoord, int ycoord);
 
 private:
-	int m_GridSize = GRID_SIZE;
-
-
-	//SSBO containers
-	std::array<int, GRID_SIZE * GRID_SIZE> m_ParticleStates_in = { 0 };
-	std::array<int, GRID_SIZE * GRID_SIZE> m_ParticleStates_out = { 0 };
-
+	int m_GridSize;
 
 	GLCore::Utils::OrthographicCameraController m_CameraController;
 
-
-
-
-
-
+	std::vector<int> m_ParticleStates_in;
+	std::vector<int> m_ParticleStates_out;
 
 	//Drawing Stuff
 	GLuint m_VBO, m_VAO, m_EBO;
@@ -46,4 +42,6 @@ private:
 
 
 };
+
+GameOfLife* ChangeGridSize(GameOfLife* game, int newGridSize);
 

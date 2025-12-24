@@ -1,9 +1,20 @@
 #pragma once
 
 
-#include <GLCore.h>
-#include "GLCore/Util/Texture.h"
+
 #include "GameOfLife.h"
+
+enum State
+{
+	COMPUTE,
+	PAUSED
+};
+
+enum MouseButton
+{
+	RightClick = 0,
+	LeftClick
+};
 
 class SandboxLayer : public GLCore::Layer
 {
@@ -21,11 +32,18 @@ private:
 	
 	
 	
-	GameOfLife m_Game;
+	GameOfLife* m_Game = new GameOfLife(64);
+
+	State m_ComputeState = PAUSED;
+	float m_UpdateFrequency = 0.05f;
+	float m_TimeCounter = 0;
+
+	int m_GridSize = 64;
 
 
-	int m_WindowHeight = 720;
-	int m_WindowWidth = 1280;
+	float m_XMousePos;
+	float m_YMousePos;
+
 
 	
 };
