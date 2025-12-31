@@ -58,7 +58,7 @@ namespace GLCore {
 				return false;
 			}
 		});
-		dispatcher.Dispatch<WindowResizeEvent>(BIND_EVENT_FN(OnWindowResize));
+		
 
 		for (auto it = m_LayerStack.end(); it != m_LayerStack.begin(); )
 		{
@@ -97,11 +97,6 @@ namespace GLCore {
 		return true;
 	}
 
-	bool Application::OnWindowResize(WindowResizeEvent& e)
-	{
-		
-		glViewport(0, 0, e.GetWidth(), e.GetHeight());
-		return false;
-	}
+	
 
 }
