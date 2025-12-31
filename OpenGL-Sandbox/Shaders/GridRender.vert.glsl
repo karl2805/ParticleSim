@@ -23,8 +23,6 @@ int State = data_SSBO[gl_InstanceID];
 uniform mat4 u_ViewProjection;
 
 
-
-
 void main()
 {
 	

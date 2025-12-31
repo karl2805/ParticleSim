@@ -8,6 +8,11 @@ layout(std430, binding = 1) buffer layoutName
     int data_SSBO[];
 };
 
+layout(std430, binding = 4) buffer debugsdf
+{
+    int data_debug[];
+};
+
 
 out vec2 v_LocalPosition;
 uniform int u_GridSize;
@@ -18,11 +23,11 @@ int i = int(gl_InstanceID);
 
 vec2 cell = vec2(i % u_GridSize, floor(i / u_GridSize));
 
-int State = data_SSBO[gl_InstanceID];
 
 uniform mat4 u_ViewProjection;
 
-
+flat out int Debug;
+flat out int State;
 
 
 void main()
@@ -31,9 +36,10 @@ void main()
 	v_LocalPosition = aPos;
 	vec2 position = (aPos + 1) / u_GridSize - 1;
 
-	position = position * State + 2 * (cell / u_GridSize);
+	position = position + 2 * (cell / u_GridSize);
 
-	
+	State = data_SSBO[i];
+	Debug = data_debug[i];
 
 	gl_Position = u_ViewProjection * vec4(position, 0.0f, 1.0f);
 

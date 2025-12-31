@@ -4,7 +4,7 @@ in vec2 v_LocalPosition;
 
 out vec4 FragColor;
 
-float BorderWidth = 0.1f;
+uniform float u_BorderThickness;
 
 uniform vec4 u_ClearColor;
 
@@ -14,8 +14,8 @@ void main()
      FragColor = u_ClearColor;
 
      //set border
-     if (v_LocalPosition.x < -1 + BorderWidth || v_LocalPosition.x > 1 - BorderWidth ||
-         v_LocalPosition.y < -1 + BorderWidth || v_LocalPosition.y > 1 - BorderWidth)
+     if (v_LocalPosition.x < -1 + u_BorderThickness || v_LocalPosition.x > 1 - u_BorderThickness ||
+         v_LocalPosition.y < -1 + u_BorderThickness || v_LocalPosition.y > 1 - u_BorderThickness)
      {
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);
      }
