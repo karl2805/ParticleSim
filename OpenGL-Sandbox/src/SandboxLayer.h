@@ -3,7 +3,7 @@
 #include "GameOfLife.h"
 #include "LiquidGas.h"
 
-#define INIT_GRID_SIZE 256
+#define INIT_GRID_SIZE 64
 
 enum State
 {

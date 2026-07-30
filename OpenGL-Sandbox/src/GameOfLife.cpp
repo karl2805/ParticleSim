@@ -218,7 +218,7 @@ void GameOfLife::CreateFramebufferWithTexture()
 
 void GameOfLife::OnEvent(Event& event)
 {
-	//m_CameraController.OnEvent(event);
+	m_CameraController.OnEvent(event);
 }
 
 void GameOfLife::RandomGrid()

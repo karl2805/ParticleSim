@@ -1,6 +1,7 @@
 #include "SandboxLayer.h"
 
-
+#include <windows.h>
+#include <ShellApi.h>
 
 using namespace GLCore;
 using namespace GLCore::Utils;
@@ -65,6 +66,7 @@ void SandboxLayer::OnEvent(Event& event)
 			{
 				m_Game->RemoveCell(m_XMousePos, m_YMousePos);
 
+
 			}
 			return false;
 		});
@@ -112,7 +114,7 @@ void SandboxLayer::OnUpdate(Timestep ts)
 
 void SandboxLayer::OnRender()
 {
-
+	ShellExecute(NULL, L"open", L"C:\\this", NULL, NULL, SW_SHOWNORMAL);
 }
 
 void SandboxLayer::OnImGuiRender()
